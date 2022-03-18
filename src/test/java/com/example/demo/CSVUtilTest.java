@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
 
 import java.io.FileReader;
@@ -118,7 +119,21 @@ public class CSVUtilTest {
                     );
                 });
             });
+            assert filtroPorClub.block().size() == 33;
     }
 
+    @Test
+    void ranckingPorPais(){
+        List<Player> list = CsvUtilFile.getPlayers();
+        Flux<Player> listFlux = Flux.fromStream(list.parallelStream()).cache();
+        var ranckingPorPais= listFlux
+                .groupBy(player -> player.getNational())
+                .flatMap(player->player.buffer());
+
+        ranckingPorPais.subscribe(p->p.forEach(r->
+                System.out.println("[Nombre: " + r.getName() +" ]" + " [Pais: " + r.getNational() + " ]" )
+                ));
+
+    }
 
 }
