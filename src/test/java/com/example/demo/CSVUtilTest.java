@@ -75,28 +75,50 @@ public class CSVUtilTest {
     }
 
     @Test
-    void reactive_filtrarJugadoresMayoresA34(){
-        List<Player>list =CsvUtilFile.getPlayers();
-        Flux<Player> listFlux=Flux.fromStream(list.parallelStream()).cache();
-        Mono<Map<String, Collection<Player>>> MayoresA34=listFlux
+    void reactive_filtrarJugadoresMayoresA34() {
+        List<Player> list = CsvUtilFile.getPlayers();
+        Flux<Player> listFlux = Flux.fromStream(list.parallelStream()).cache();
+        //Publicador
+        Mono<Map<String, Collection<Player>>> MayoresA34 = listFlux
                 .flatMap(playerA -> listFlux
-                        .filter(player -> player.age>34))
+                        .filter(player -> player.age > 34))
                 .distinct()
                 .collectMultimap(Player::getName);
 
-        //subcripcion a observable Patron observador
-        MayoresA34.subscribe(p->System.out.println("Numero de jugadores Mayores a 34: "+p.size()));
+        //subcripcion a observable (observador)
+        MayoresA34.subscribe(p -> System.out.println("Numero de jugadores Mayores a 34: " + p.size()));
         //impresion del nombre y edad
-        MayoresA34.block().forEach((nombre,player)->{
-            player.forEach(p->{System.out.println(
-                    "[Nombre: " + p.getName()+" ]" + " [ Edad: "+ p.getAge()+"]"
-            );});
+        MayoresA34.block().forEach((nombre, player) -> {
+            player.forEach(p -> {
+                System.out.println(
+                        "[Nombre: " + p.getName() + " ]" + " [ Edad: " + p.getAge() + "]"
+                );
+            });
         });
-
-
-
-
-
+        assert MayoresA34.block().size() == 488;
     }
+        @Test
+        void reactive_FiltrarPorClub(){
+            List<Player> list = CsvUtilFile.getPlayers();
+            Flux<Player> listFlux = Flux.fromStream(list.parallelStream()).cache();
+            //Publicador
+            Mono<Map<String, Collection<Player>>> filtroPorClub = listFlux
+                    .flatMap(playerA -> listFlux
+                            .filter(player -> player.club.equals("FC Barcelona")))
+                    .distinct()
+                    .collectMultimap(Player::getName);
+
+            //subcripcion a observable (observador)
+            filtroPorClub.subscribe(p -> System.out.println("Numero de jugadores del FC Barcelona: " + p.size()));
+            //impresion del nombre y edad
+            filtroPorClub.block().forEach((nombre, player) -> {
+                player.forEach(p -> {
+                    System.out.println(
+                            "[Nombre: " + p.getName() + " ]" + " [ club: " + p.getClub() + "]"
+                    );
+                });
+            });
+    }
+
 
 }
