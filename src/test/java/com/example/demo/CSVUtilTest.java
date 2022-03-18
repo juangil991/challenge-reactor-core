@@ -130,6 +130,19 @@ public class CSVUtilTest {
                 .groupBy(player -> player.getNational())
                 .flatMap(player->player.buffer());
 
+        Mono<Map<String, Collection<Player>>> filtroPorJugador = listFlux
+                .flatMap(playerA -> listFlux
+                        .filter(player -> player.name.equals("Sergio Busquets")))
+                .distinct()
+                .collectMultimap(Player::getName);
+
+        //Subscriptor muestra de nacionalidad de jugador
+        filtroPorJugador.subscribe(p->p.forEach((nombre,players)->{
+            players.forEach(player -> System.out.println("[ Nombre Jugador: " + player.getName() + " ]"
+                + " [ Nacionalidad: " + player.getNational() + " ]"
+            ));
+        }));
+        //Subscriptor Muestra Rancking de jugadores por pais
         ranckingPorPais.subscribe(p->p.forEach(r->
                 System.out.println("[Nombre: " + r.getName() +" ]" + " [Pais: " + r.getNational() + " ]" )
                 ));
