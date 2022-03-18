@@ -2,7 +2,10 @@ package com.example.demo;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.logging.Logger;
+import org.junit.platform.commons.logging.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,6 +19,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CSVUtilTest {
+
+    private static final Logger log= LoggerFactory.getLogger(Player.class);
 
     @Test
     void converterData(){
@@ -32,13 +37,18 @@ public class CSVUtilTest {
                     player.name = player.name.toUpperCase(Locale.ROOT);
                     return player;
                 })
-                .flatMap(playerA -> list.parallelStream()
+                .flatMap(playerA ->list.parallelStream()
                         .filter(playerB -> playerA.club.equals(playerB.club))
                 )
                 .distinct()
                 .collect(Collectors.groupingBy(Player::getClub));
-
+        listFilter.values().stream().forEach((players)->
+                players.stream().forEach(player -> {
+                    System.out.println("nombre: "+player.getName() + " club: " + player.getClub() + " age: "+player.getAge());
+                })
+                );
         assert listFilter.size() == 322;
+
     }
 
 
@@ -59,10 +69,34 @@ public class CSVUtilTest {
                 )
                 .distinct()
                 .collectMultimap(Player::getClub);
-
+        listFilter.subscribe();
         assert listFilter.block().size() == 322;
+
     }
 
+    @Test
+    void reactive_filtrarJugadoresMayoresA34(){
+        List<Player>list =CsvUtilFile.getPlayers();
+        Flux<Player> listFlux=Flux.fromStream(list.parallelStream()).cache();
+        Mono<Map<String, Collection<Player>>> MayoresA34=listFlux
+                .flatMap(playerA -> listFlux
+                        .filter(player -> player.age>34))
+                .distinct()
+                .collectMultimap(Player::getName);
 
+        //subcripcion a observable Patron observador
+        MayoresA34.subscribe(p->System.out.println("Numero de jugadores Mayores a 34: "+p.size()));
+        //impresion del nombre y edad
+        MayoresA34.block().forEach((nombre,player)->{
+            player.forEach(p->{System.out.println(
+                    "[Nombre: " + p.getName()+" ]" + " [ Edad: "+ p.getAge()+"]"
+            );});
+        });
+
+
+
+
+
+    }
 
 }
